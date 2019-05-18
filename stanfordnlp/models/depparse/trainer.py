@@ -67,13 +67,29 @@ class Trainer(BaseTrainer):
         inputs, orig_idx, word_orig_idx, sentlens, wordlens = unpack_batch(batch, self.use_cuda)
         word, word_mask, wordchars, wordchars_mask, upos, xpos, ufeats, pretrained, lemma, head, deprel = inputs
 
+        #TODO: how to pass them with config
+        kbest = 2
+        k=0
+
         self.model.eval()
         batch_size = word.size(0)
         _, preds = self.model(word, word_mask, wordchars, wordchars_mask, upos, xpos, ufeats, pretrained, lemma, head, deprel, word_orig_idx, sentlens, wordlens)
-        head_seqs = [chuliu_edmonds_one_root(adj[:l, :l])[1:] for adj, l in zip(preds[0], sentlens)] # remove attachment for the root
-        deprel_seqs = [self.vocab['deprel'].unmap([preds[1][i][j+1][h] for j, h in enumerate(hs)]) for i, hs in enumerate(head_seqs)]
+        head_seqs = []
+        deprel_seqs = []
+        for sentence_index, adj, sentence_length in zip(range(len(sentlens)), preds[0], sentlens):
+            # remove attachment for the root
+            scores = adj[:sentence_length, :sentence_length]
+            mst = chuliu_edmonds_one_root(scores)[1:]
+            #TODO: use model with kbest
+            msts = [mst for _ in range(kbest)]
+            head_seqs.append([])
+            deprel_seqs.append([])
+            for mst in msts:
+                head_seqs[-1].append(mst)
+                deprel_seq = self.vocab['deprel'].unmap([preds[1][sentence_index][word_index+1][parent_index] for word_index, parent_index in enumerate(mst)])
+                deprel_seqs[-1].append(deprel_seq)
 
-        pred_tokens = [[[str(head_seqs[i][j]), deprel_seqs[i][j]] for j in range(sentlens[i]-1)] for i in range(batch_size)]
+        pred_tokens = [[[str(head_seqs[i][k][j]), deprel_seqs[i][k][j]]  for j in range(sentlens[i]-1)] for i in range(batch_size)]
         if unsort:
             pred_tokens = utils.unsort(pred_tokens, orig_idx)
         return pred_tokens
