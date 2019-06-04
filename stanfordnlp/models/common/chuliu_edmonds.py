@@ -45,13 +45,27 @@ def tarjan(tree):
             strong_connect(i)
     return cycles
 
+def random_argmax(vector):
+    """Randomized in proportion to the probability, and returns the index of the chosen value"""
+    norm_vec = np.exp(vector)
+    norm_vec /= norm_vec.sum()
+    return np.random.choice(np.arange(len(vector)),p=norm_vec)
+
+
+def maximal_spanning_tree(scores, detemenistic=False):
+    """Gets a score matrix, and return the index of the most-likely parent"""
+    if determenistic:
+        return np.argmax(scores, axis=1)
+    return np.apply_along_axis(random_argmax, 1, scores)
+
+
 def chuliu_edmonds(scores):
     """"""
 
     np.fill_diagonal(scores, -float('inf')) # prevent self-loops
     scores[0] = -float('inf')
     scores[0,0] = 0
-    tree = np.argmax(scores, axis=1)
+    tree = maximal_spanning_tree(scores)
     cycles = tarjan(tree)
     #print(scores)
     #print(cycles)
@@ -127,7 +141,6 @@ def chuliu_edmonds(scores):
 #===============================================================
 def chuliu_edmonds_one_root(scores):
     """"""
-
     scores = scores.astype(np.float64)
     tree = chuliu_edmonds(scores)
     roots_to_try = np.where(np.equal(tree[1:], 0))[0]+1
