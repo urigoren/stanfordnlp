@@ -52,9 +52,9 @@ def random_argmax(vector):
     return np.random.choice(np.arange(len(vector)),p=norm_vec)
 
 
-def maximal_spanning_tree(scores, detemenistic=False):
+def maximal_spanning_tree(scores, deterministic=False):
     """Gets a score matrix, and return the index of the most-likely parent"""
-    if determenistic:
+    if deterministic:
         return np.argmax(scores, axis=1)
     return np.apply_along_axis(random_argmax, 1, scores)
 
