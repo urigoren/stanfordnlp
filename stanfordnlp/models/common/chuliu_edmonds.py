@@ -1,6 +1,7 @@
 # Adapted from Tim's code here: https://github.com/tdozat/Parser-v3/blob/master/scripts/chuliu_edmonds.py
 
 import numpy as np
+import os
 
 def tarjan(tree):
     """"""
@@ -52,7 +53,7 @@ def random_argmax(vector):
     return np.random.choice(np.arange(len(vector)),p=norm_vec)
 
 
-def maximal_spanning_tree(scores, deterministic=False):
+def maximal_spanning_tree(scores, deterministic=not bool(os.environ.get("SPANTREE_RANDOM"))):
     """Gets a score matrix, and return the index of the most-likely parent"""
     if deterministic:
         return np.argmax(scores, axis=1)
